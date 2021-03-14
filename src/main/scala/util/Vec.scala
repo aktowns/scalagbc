@@ -1,7 +1,7 @@
 package util
 
-import scala.compiletime.ops.int._
-import scala.compiletime.ops.boolean._
+import scala.compiletime.ops.int.*
+import scala.compiletime.ops.boolean.*
 import scala.compiletime.{constValue, error}
 
 object Vec:
@@ -14,28 +14,21 @@ object Vec:
   def apply[A](x: A, y: A, z: A, a: A): Vec[A, 4] = new Vec(Vector(x, y, z, a))
 
   inline def fromVector[A, N <: Int](v: Vector[A]): Option[Vec[A, N]] =
-    inline if (v.length != constValue[N]) {
-      None
-    } else {
-      Some(new Vec[A, N](v))
-    }
+    inline if v.length != constValue[N] then None
+    else Some(new Vec[A, N](v))
 
   inline def vectorSlice[A, From <: Int, Until <: Int](v: Vector[A])(using
                                                                      Assert[(Until - From) >= 0, "Slice is negative"],
                                                                      Assert[From >= 0, "From must be positive"],
                                                                      Assert[Until >= 0, "Until must be positive"]): Option[Vec[A, Until - From]] =
-    if (v.length < constValue[Until - From]) {
-      None
-    } else {
-      Some(new Vec[A, Until - From](v.slice(constValue[From], constValue[Until])))
-    }
-
+    if v.length < constValue[Until - From] then None
+    else Some(new Vec[A, Until - From](v.slice(constValue[From], constValue[Until])))
 
 class Vec[+A, N <: Int](private val inner: Vector[A]):
-  inline def head: A = inline if (constValue[N] == 0) error("empty vectors dont have heads") else inner.head
+  inline def head: A = inline if constValue[N] == 0 then error("empty vectors dont have heads") else inner.head
 
   inline def tail: Vec[A, N - 1] =
-    inline if (constValue[N] == 0) error("empty vectors dont have tails")
+    inline if constValue[N] == 0 then error("empty vectors dont have tails")
     else new Vec[A, N - 1](inner.tail)
 
   def ++[O <: Int, B >: A](other: Vec[B, O]): Vec[B, N + O] = new Vec[B, N + O](inner ++ other.inner)
