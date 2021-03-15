@@ -9,11 +9,12 @@ version := "0.1.0"
 scalaVersion := dottyVersion
 
 libraryDependencies ++= Seq(
-  "org.scodec"    %% "scodec-bits" % "1.1.24",
-  "org.scodec"    %% "scodec-core" % "2.0-16-011fe29",
-  "org.typelevel" %% "cats-core"   % "2.4.2",
-  "org.typelevel" %% "cats-free"   % "2.4.2",
-  "org.typelevel" %% "cats-effect" % "3.0.0-RC2"
+  "org.scodec"                 %% "scodec-bits"   % "1.1.24",
+  "org.scodec"                 %% "scodec-core"   % "2.0-16-011fe29",
+  "org.typelevel"              %% "cats-core"     % "2.4.2",
+  "org.typelevel"              %% "cats-free"     % "2.4.2",
+  "org.typelevel"              %% "cats-effect"   % "3.0.0-RC2",
+  "com.github.julien-truffaut" %% "monocle-core"  % "3.0.0-M3"
 )
 
 scalacOptions ++= Seq(
