@@ -18,4 +18,3 @@ object Main:
     verifyGlobalCksum(rom.map(_.u8), header.globalChecksum)
     prettyPrintHeader(header)
     println("Checks passed, ROM ready to boot")
-
