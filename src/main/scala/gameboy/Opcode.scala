@@ -33,23 +33,33 @@ enum Op[A]:
   case U16(str: UInt8 => String, op: (UInt8) => Cpu[A])
   case U24(str: UInt16 => String, op: (UInt16) => Cpu[A])
 
+def decompile(data: Vector[UInt8]): Vector[String] =
+  val op = data.headOption.map(_.toInt).map(OpcodeLookup.apply)
+  op match
+    case None => Vector()
+    case Some(Op.U8(f, _))  => f() +: decompile(data.tail)
+    case Some(Op.U16(f, _)) => f(data(1)) +: decompile(data.drop(2))
+    case Some(Op.S16(f, _)) => f(data(1).toByte) +: decompile(data.drop(2))
+    case Some(Op.U24(f, _)) => f(UInt16(data(1), data(2))) +: decompile(data.drop(3))
+
+
 val OpcodeLookup: Map[Int, Op[Unit]] = Map(
-  0x0 -> Op.U8(() => f"NOP", opNOP),
-  0x1 -> Op.U24((x: UInt16) => f"LD BC,${x.toInt}%4x", (x: UInt16) => opLDrv16(R.BC, x : UInt16)),
-  0x2 -> Op.U8(() => f"LD (BC),A", opLDar(Addr(R.BC), R.A)),
-  0x3 -> Op.U8(() => f"INC BC", opINCr(R.BC)),
-  0x4 -> Op.U8(() => f"INC B", opINCr(R.B)),
-  0x5 -> Op.U8(() => f"DEC B", opDECr(R.B)),
-  0x6 -> Op.U16((x: UInt8) => f"LD B,${x.toInt}%2x", (x: UInt8) => opLDrv8(R.B, x : UInt8)),
-  0x7 -> Op.U8(() => f"RLCA", opRLCA),
-  0x8 -> Op.U24((x: UInt16) => f"LD (${x.toInt}%4x),SP", (x: UInt16) => opLDa16r(Addr(x : UInt16), R.SP)),
-  0x9 -> Op.U8(() => f"ADD HL,BC", opADDrr(R.HL, R.BC)),
-  0xa -> Op.U8(() => f"LD A,(BC)", opLDra(R.A, Addr(R.BC))),
-  0xb -> Op.U8(() => f"DEC BC", opDECr(R.BC)),
-  0xc -> Op.U8(() => f"INC C", opINCr(R.C)),
-  0xd -> Op.U8(() => f"DEC C", opDECr(R.C)),
-  0xe -> Op.U16((x: UInt8) => f"LD C,${x.toInt}%2x", (x: UInt8) => opLDrv8(R.C, x : UInt8)),
-  0xf -> Op.U8(() => f"RRCA", opRRCA),
+  0x00 -> Op.U8(() => f"NOP", opNOP),
+  0x01 -> Op.U24((x: UInt16) => f"LD BC,${x.toInt}%4x", (x: UInt16) => opLDrv16(R.BC, x : UInt16)),
+  0x02 -> Op.U8(() => f"LD (BC),A", opLDar(Addr(R.BC), R.A)),
+  0x03 -> Op.U8(() => f"INC BC", opINCr(R.BC)),
+  0x04 -> Op.U8(() => f"INC B", opINCr(R.B)),
+  0x05 -> Op.U8(() => f"DEC B", opDECr(R.B)),
+  0x06 -> Op.U16((x: UInt8) => f"LD B,${x.toInt}%2x", (x: UInt8) => opLDrv8(R.B, x : UInt8)),
+  0x07 -> Op.U8(() => f"RLCA", opRLCA),
+  0x08 -> Op.U24((x: UInt16) => f"LD (${x.toInt}%4x),SP", (x: UInt16) => opLDa16r(Addr(x : UInt16), R.SP)),
+  0x09 -> Op.U8(() => f"ADD HL,BC", opADDrr(R.HL, R.BC)),
+  0x0a -> Op.U8(() => f"LD A,(BC)", opLDra(R.A, Addr(R.BC))),
+  0x0b -> Op.U8(() => f"DEC BC", opDECr(R.BC)),
+  0x0c -> Op.U8(() => f"INC C", opINCr(R.C)),
+  0x0d -> Op.U8(() => f"DEC C", opDECr(R.C)),
+  0x0e -> Op.U16((x: UInt8) => f"LD C,${x.toInt}%2x", (x: UInt8) => opLDrv8(R.C, x : UInt8)),
+  0x0f -> Op.U8(() => f"RRCA", opRRCA),
   0x10 -> Op.U16((x: UInt8) => f"STOP", (x: UInt8) => opSTOP),
   0x11 -> Op.U24((x: UInt16) => f"LD DE,${x.toInt}%4x", (x: UInt16) => opLDrv16(R.DE, x : UInt16)),
   0x12 -> Op.U8(() => f"LD (DE),A", opLDar(Addr(R.DE), R.A)),
@@ -229,7 +239,7 @@ val OpcodeLookup: Map[Int, Op[Unit]] = Map(
   0xc0 -> Op.U8(() => f"RET NZ", opRETf(F.NZ)),
   0xc1 -> Op.U8(() => f"POP BC", opPOPr(R.BC)),
   0xc2 -> Op.U24((x: UInt16) => f"JP NZ,${x.toInt}%4x", (x: UInt16) => opJPfv16(F.NZ, x : UInt16)),
-  0xc3 -> Op.U24((x: UInt16) => f"JP ${x.toInt}%4x", (x: UInt16) => opJPv16(x : UInt16)),
+  0xc3 -> Op.U24((x: UInt16) => s"JP ${x}", (x: UInt16) => opJPv16(x : UInt16)),
   0xc4 -> Op.U24((x: UInt16) => f"CALL NZ,${x.toInt}%4x", (x: UInt16) => opCALLfv16(F.NZ, x : UInt16)),
   0xc5 -> Op.U8(() => f"PUSH BC", opPUSHr(R.BC)),
   0xc6 -> Op.U16((x: UInt8) => f"ADD A,${x.toInt}%2x", (x: UInt8) => opADDrv8(R.A, x : UInt8)),

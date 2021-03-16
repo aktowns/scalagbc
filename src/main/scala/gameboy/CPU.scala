@@ -162,9 +162,9 @@ case class Registers(af: UInt16, bc: UInt16, de: UInt16, hl: UInt16, sp: UInt16,
   val a = ???
   val f = ???
 
-def x = 
-  val r = Registers(0.u16, 0.u16, 0.u16, 0.u16, 0.u16, 0.u16)
-  r.focus(af).replace(1.u16) 
+// def x = 
+//   val r = Registers(0.u16, 0.u16, 0.u16, 0.u16, 0.u16, 0.u16)
+//   r.focus(af).replace(1.u16) 
 
 // type stack = Rom[Ram[Registers[Id, *], *], A]
 
