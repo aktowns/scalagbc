@@ -10,25 +10,26 @@ import monocle.syntax.all._
 import monocle.Lens
 import util.*
 
-
-case class CpuRegisters()
-
 enum CpuA[A]:
-  case NextInstruction                  extends CpuA[Instruction]
-  case ReadRegister8(r: R[8])              extends CpuA[UInt8]
+  case ReadRegister8(r: R[8])               extends CpuA[UInt8]
   case ReadRegister16(r: R[16])             extends CpuA[UInt16]
-  case WriteRegister8(r: R[8], v: UInt8)   extends CpuA[Unit]
+  case WriteRegister8(r: R[8], v: UInt8)    extends CpuA[Unit]
   case WriteRegister16(r: R[16], v: UInt16) extends CpuA[Unit]
 
 type Cpu[A] = Free[CpuA, A]
+type CpuState[A] = State[Registers, A]
 
+inline def readRegister8(r: R[8]): Cpu[UInt8] = liftF[CpuA, UInt8](CpuA.ReadRegister8(r))
+inline def readRegister16(r: R[16]): Cpu[UInt16] = liftF[CpuA, UInt16](CpuA.ReadRegister16(r))
+inline def writeRegister8(r: R[8], v: UInt8): Cpu[Unit] = liftF[CpuA, Unit](CpuA.WriteRegister8(r, v))
+inline def writeRegister16(r: R[16], v: UInt16): Cpu[Unit] = liftF[CpuA, Unit](CpuA.WriteRegister16(r, v))
 
-def opADDrr(r1: R[8], r2: R[8]): Cpu[Unit] =
-  for 
-    r1 <- readRegister8(r1)
-    r2 <- readRegister8(r2)
-    _  <- writeRegister(r1, r1 + r2)
-  yield  ()
+// def opADDrr(r1: R[8], r2: R[8]): Cpu[Unit] =
+//   for 
+//     res1 <- readRegister8(r1)
+//     res2 <- readRegister8(r2)
+//     _  <- writeRegister8(r1, res1 + res2)
+//   yield  ()
 
 //type CpuStateT[M[_], A] = StateT[M, CpuRegisters, A]
 
@@ -64,24 +65,36 @@ object Registers:
   val l: Lens[Registers, UInt8] = Lens[Registers, UInt8](_.hl.mostSignificant)(n => a => a.copy(hl = UInt16(a.hl.leastSignificant, n)))
   val hl: Lens[Registers, UInt16] = Lens[Registers, UInt16](_.hl)(n => a => a.copy(hl = n))
 
-// def x = 
-//   val r = Registers(0.u16, 0.u16, 0.u16, 0.u16, 0.u16, 0.u16)
-//   r.focus(af).replace(1.u16) 
+  val sp: Lens[Registers, UInt16] = Lens[Registers, UInt16](_.sp)(n => a => a.copy(sp = n))
+  val pc: Lens[Registers, UInt16] = Lens[Registers, UInt16](_.pc)(n => a => a.copy(pc = n))
 
-// type stack = Rom[Ram[Registers[Id, *], *], A]
+  def fromR8(r: R[8]): Lens[Registers, UInt8] = 
+    r match
+      case R.A => Registers.a
+      case R.F => Registers.f
+      case R.B => Registers.b
+      case R.C => Registers.c
+      case R.D => Registers.d
+      case R.E => Registers.e
+      case R.L => Registers.l
+      case R.H => Registers.h
 
-def evaluator: CpuA ~> Id = 
-  new (CpuA ~> Id) {
-    def apply[A](fa: CpuA[A]): Id[A] =
+  def fromR16(r: R[16]): Lens[Registers, UInt16] = 
+    r match
+      case R.AF => Registers.af
+      case R.BC => Registers.bc
+      case R.DE => Registers.de
+      case R.HL => Registers.hl
+      case R.SP => Registers.sp
+      case R.PC => Registers.pc
+
+def evaluator: CpuA ~> CpuState = 
+  new (CpuA ~> CpuState) {
+    def apply[A](fa: CpuA[A]): CpuState[A] =
       fa match
-        case CpuA.NextInstruction       => Instruction.NOP
-//        case CpuA.OpJPv16(v: UInt16) => setRegister(R.SP, v)
+        case CpuA.ReadRegister8(r)      => State.inspect(Registers.fromR8(r).get)
+        case CpuA.ReadRegister16(r)     => State.inspect(Registers.fromR16(r).get)
+        case CpuA.WriteRegister8(r, v)  => State.modify(Registers.fromR8(r).replace(v))
+        case CpuA.WriteRegister16(r, v) => State.modify(Registers.fromR16(r).replace(v))
   }
 
-/*
-def evaluator: Cpu ~> CpuStateT[IO, *] = new (Cpu ~> CpuStateT[IO, *]) {
-  def apply[A](fa: Cpu[A]): CpuStateT[IO, A] =
-    fa match
-      case Cpu.OpNop => StateT.pure[IO, CpuRegisters, A](println("NOP"))
-}
-*/

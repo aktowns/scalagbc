@@ -8,7 +8,7 @@ object UInt16:
   final def apply(n: Short): UInt16 = new UInt16(n.toChar)
   final def apply(n: Int): UInt16 = new UInt16(n.toChar)
   final def apply(b1: UInt8, b2: UInt8) = 
-    new UInt16( ((b1.toByte << 8) | (b2.toByte & 0xFF)).toChar )
+    new UInt16( ((b2.toByte << 8) | (b1.toByte & 0xFF)).toChar )
 
 class UInt16(val signed: Char):
   def toByte = signed.toByte

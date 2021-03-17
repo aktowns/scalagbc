@@ -9,6 +9,11 @@ def readROM[N <: Int](file: String): Vector[Byte] =
     .readAllBytes(Path.of(file))
     .toVector
 
+def demo =
+  val rom = readROM("space_invaders.gbc").map(_.u8)
+  val emu = evaluate(rom)
+  emu.foldMap(evaluator).run(Registers.empty.copy(pc = 0x0100.u16)).value
+
 object Main:
   def main(args: Array[String]): Unit =
     val rom = readROM("space_invaders.gbc")
