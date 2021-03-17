@@ -2,21 +2,25 @@ package gameboy
 
 import util.{UInt16, UInt8}
 
-enum R:
-  case F
-  case A
-  case AF
-  case C
-  case B
-  case BC
-  case E
-  case D
-  case DE
-  case L
-  case H
-  case HL
-  case SP
-  case PC
+enum R[SZ <: Int]:
+  case F   extends R[8]
+  case A   extends R[8]
+  case AF  extends R[16]
+  case C   extends R[8]
+  case B   extends R[8]
+  case BC  extends R[16]
+  case E   extends R[8]
+  case D   extends R[8]
+  case DE  extends R[16]
+  case L   extends R[8]
+  case H   extends R[8]
+  case HL  extends R[16]
+  case SP  extends R[16]
+  case PC  extends R[16]
+
+// R but i don't care about the size, pronounced ARRRRRR 
+// like ARRRRRR why im spending all my time on stupid shit like sized registers
+type RR = R[8 | 16]
 
 enum F:
   case Z
@@ -24,8 +28,8 @@ enum F:
   case C
   case NC
 
-case class Addr(v: R | UInt16 | UInt8, increment: Boolean = false, decrement: Boolean = false, offset: Int = 0)
-case class Add(v: Byte, r: R)
+case class Addr(v: R[8] | R[16] | UInt16 | UInt8, increment: Boolean = false, decrement: Boolean = false, offset: Int = 0)
+case class Add(v: Byte, r: R[8] | R[16])
 
 enum Op:
   case U8(str: () => String, op: Instruction)
@@ -58,54 +62,54 @@ enum Instruction:
   case RETI                            extends Instruction
   case DI                              extends Instruction
   case EI                              extends Instruction
-  case DECr(r1: R)                     extends Instruction
-  case INCr(r1: R)                     extends Instruction
-  case RETr(r1: R)                     extends Instruction
-  case PUSHr(r1: R)                    extends Instruction
-  case POPr(r1: R)                     extends Instruction
-  case JPr(r1: R)                      extends Instruction
+  case DECr(r1: R[8] | R[16])          extends Instruction
+  case INCr(r1: R[8] | R[16])          extends Instruction
+  case RETr(r1: R[8])                  extends Instruction
+  case PUSHr(r1: R[16])                extends Instruction
+  case POPr(r1: R[16])                 extends Instruction
+  case JPr(r1: R[16])                  extends Instruction
   case JPv16(v: UInt16)                extends Instruction
   case JPfv16(f: F, v: UInt16)         extends Instruction
-  case JPrv16(r1: R, v: UInt16)        extends Instruction
+  case JPrv16(r1: R[8], v: UInt16)     extends Instruction
   case CALLv16(v: UInt16)              extends Instruction
   case CALLfv16(f: F, v: UInt16)       extends Instruction
-  case CALLrv16(r1: R, v: UInt16)      extends Instruction
-  case LDrr(r1: R, r2: R)              extends Instruction
-  case LDra(r1: R, a: Addr)            extends Instruction
-  case LDar(a: Addr, r1: R)            extends Instruction
-  case LDrv8(r1: R, v: UInt8 | Add)    extends Instruction
-  case LDa8r(a: Addr, r1: R)           extends Instruction
-  case LDra8(r1: R, a: Addr)           extends Instruction
+  case CALLrv16(r1: R[8], v: UInt16)   extends Instruction
+  case LDrr[N <: 8 | 16](r1: R[N], r2: R[N])        extends Instruction
+  case LDra(r1: R[8], a: Addr)         extends Instruction
+  case LDar(a: Addr, r1: R[8])         extends Instruction
+  case LDrv8(r1: R[8] | R[16], v: UInt8 | Add)    extends Instruction
+  case LDa8r(a: Addr, r1: R[8])        extends Instruction
+  case LDra8(r1: R[8], a: Addr)        extends Instruction
   case LDav8(a: Addr, v: UInt8)        extends Instruction
-  case LDrv16(r1: R, v: UInt16)        extends Instruction
-  case LDa16r(a: Addr, r1: R)          extends Instruction
-  case LDra16(r1: R, a: Addr)          extends Instruction
-  case ADDrr(r1: R, r2: R)             extends Instruction
-  case ADDra(r1: R, a: Addr)           extends Instruction
-  case ADDrv8(r1: R, v: UInt8 | Byte)  extends Instruction
-  case ADCrr(r1: R, r2: R)             extends Instruction
-  case ADCra(r1: R, a: Addr)           extends Instruction
-  case ADCrv8(r1: R, v: UInt8)         extends Instruction
-  case SUBrr(r1: R, r2: R)             extends Instruction
-  case SUBra(r1: R, a: Addr)           extends Instruction
-  case SUBrv8(r1: R, v: UInt8)         extends Instruction
-  case SBCrr(r1: R, r2: R)             extends Instruction
-  case SBCra(r1: R, a: Addr)           extends Instruction
-  case SBCrv8(r1: R, v: UInt8)         extends Instruction
-  case ORrr(r1: R, r2: R)              extends Instruction
-  case ORra(r1: R, a: Addr)            extends Instruction
-  case ORrv8(r1: R, v: UInt8)          extends Instruction
-  case XORrr(r1: R, r2: R)             extends Instruction
-  case XORra(r1: R, a: Addr)           extends Instruction
-  case XORrv8(r1: R, v: UInt8)         extends Instruction
-  case ANDrr(r1: R, r2: R)             extends Instruction
-  case ANDra(r1: R, a: Addr)           extends Instruction
-  case ANDrv8(r1: R, v: UInt8)         extends Instruction
-  case CPrr(r1: R, r2: R)              extends Instruction
-  case CPra(r1: R, a: Addr)            extends Instruction
-  case CPrv8(r1: R, v: UInt8)          extends Instruction
+  case LDrv16(r1: R[16], v: UInt16)    extends Instruction
+  case LDa16r(a: Addr, r1: R[8] | R[16]) extends Instruction
+  case LDra16(r1: R[8], a: Addr)       extends Instruction
+  case ADDrr(r1: R[8] | R[16], r2: R[8] | R[16])             extends Instruction
+  case ADDra(r1: R[8], a: Addr)           extends Instruction
+  case ADDrv8(r1: R[8] | R[16], v: UInt8 | Byte) extends Instruction
+  case ADCrr(r1: R[8], r2: R[8])       extends Instruction
+  case ADCra(r1: R[8], a: Addr)           extends Instruction
+  case ADCrv8(r1: R[8], v: UInt8)      extends Instruction
+  case SUBrr(r1: R[8], r2: R[8])       extends Instruction
+  case SUBra(r1: R[8], a: Addr)           extends Instruction
+  case SUBrv8(r1: R[8], v: UInt8)      extends Instruction
+  case SBCrr(r1: R[8], r2: R[8])       extends Instruction
+  case SBCra(r1: R[8], a: Addr)           extends Instruction
+  case SBCrv8(r1: R[8], v: UInt8)      extends Instruction
+  case ORrr(r1: R[8], r2: R[8])        extends Instruction
+  case ORra(r1: R[8], a: Addr)            extends Instruction
+  case ORrv8(r1: R[8], v: UInt8)       extends Instruction
+  case XORrr(r1: R[8], r2: R[8])       extends Instruction
+  case XORra(r1: R[8], a: Addr)           extends Instruction
+  case XORrv8(r1: R[8], v: UInt8)      extends Instruction
+  case ANDrr(r1: R[8], r2: R[8])             extends Instruction
+  case ANDra(r1: R[8], a: Addr)           extends Instruction
+  case ANDrv8(r1: R[8], v: UInt8)      extends Instruction
+  case CPrr(r1: R[8], r2: R[8])              extends Instruction
+  case CPra(r1: R[8], a: Addr)            extends Instruction
+  case CPrv8(r1: R[8], v: UInt8)       extends Instruction
   case JRv8(v: Byte)                   extends Instruction
-  case JRrv8(r1: R, v: Byte)           extends Instruction
+  case JRrv8(r1: R[8], v: Byte)        extends Instruction
   case JRfv8(f: F, v: Byte)            extends Instruction
   case RSTl(v: UInt8)                  extends Instruction
   case RETf(f: F)                      extends Instruction
